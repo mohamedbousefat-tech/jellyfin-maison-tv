@@ -1,0 +1,47 @@
+name: Construire l'APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Décompresser le projet
+        run: unzip -o jellyfin-maison-androidtv.zip
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Compiler
+        working-directory: jellyfin-maison-androidtv
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Renommer
+        run: cp jellyfin-maison-androidtv/app/build/outputs/apk/release/*.apk jellyfin-maison-tv.apk
+
+      - name: APK téléchargeable (onglet Actions)
+        uses: actions/upload-artifact@v4
+        with:
+          name: jellyfin-maison-tv-apk
+          path: jellyfin-maison-tv.apk
+
+      - name: APK en lien direct (onglet Releases)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: derniere-version
+          name: Dernière version
+          files: jellyfin-maison-tv.apk
+          make_latest: true
